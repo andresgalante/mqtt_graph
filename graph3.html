@@ -1,0 +1,86 @@
+<html>
+<head>
+   <title>MQTT over Websockets to ActiveMQ + Mozilla Metrics Graphics</title>
+   <link href='lib/metricsgraphics.css' rel='stylesheet' type='text/css'>
+	<script src="./browserMqtt.js"></script>
+	<script src='lib/jquery.min.js'></script>
+    <script src='lib/d3.min.js'></script>
+
+	<script src="lib/metricsgraphics.js"></script>
+
+<!-- 
+file:///Users/burr/git/burrsutter/mqtt_graph/graph2.html
+-->
+</head>
+<body>
+	<div id="graph1">Graph1</div>
+	<hr/>
+	<div id="graph2">Graph2</div>	
+<script>
+
+function fake_data(length, seconds) {
+    var d = new Date();
+    var v = 20;
+    var data=[];
+
+    for (var i = 0; i < length; i++) {
+        v += (Math.random() - 0.5) * 10;
+        data.push({date: MG.clone(d), value: v});
+        d = new Date(d.getTime() + seconds * 1000);
+    }
+    return data;
+}
+
+var data1 = fake_data(10, 1);
+var data2 = fake_data(10, 1);
+var data3 = fake_data(10, 1);
+var all_data = [];
+all_data.push(data1);
+all_data.push(data2);
+all_data.push(data3);
+
+var options = {
+    title: "Fake Data",
+    description: "a time-series of stuff",
+    data: all_data,
+    width: 600,
+    height: 250,
+    target: '#graph1',
+    x_accessor: 'date',
+    y_accessor: 'value',
+}
+
+var g = MG.data_graphic(options);
+
+console.log(g)
+
+/*
+setTimeout(function(){
+  console.log('updating')
+  options.data = data2;
+  MG.data_graphic(options)
+}, 3000);
+
+setTimeout(function(){
+  console.log('updating')
+  options.data = data3;
+  MG.data_graphic(options)
+}, 5000);
+*/
+setInterval(function() {
+	data1 = fake_data(10, 1);
+	data2 = fake_data(10, 1);
+	data3 = fake_data(10, 1);
+	all_data = [];
+	all_data.push(data1);
+	all_data.push(data2);
+	all_data.push(data3);
+	options.data = all_data;
+	options.target = "#graph2";
+	MG.data_graphic(options)
+}, 5000);
+
+// render();
+</script>
+</body>
+</html>

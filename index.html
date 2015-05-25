@@ -1,0 +1,33 @@
+<html>
+<head>
+  <title>MQTT over Websockets to ActiveMQ</title>
+</head>
+<body>
+<script src="./browserMqtt.js"></script>
+<script>
+      var client = mqtt.connect("ws://localhost:1884");  // ws://localhost:3000 for mosca
+      client.subscribe("hello");
+ 
+      client.on("message", function(topic, payload) {
+        alert([topic, payload].join(": "));
+        // client.end();
+      });
+ 
+      // client.publish("mqtt/demo", "hello world!");
+    </script> 
+
+MQTT over Websockets with ActiveMQ
+<ol>
+	<li><a href="https://nodejs.org/download/">Install Node.js + npm</a></li>
+	<li>npm install -g mqtt</li>
+	<li>Then <a href="https://www.npmjs.com/package/mqtt#browserify">browserify mqtt.js</a> to create "browserMqtt.js"</li>
+    <li>cd /Users/burr/demo/A-MQ/apache-activemq-5.11.1 (or wherever you installed ActiveMQ 5.9+)</li>
+	<li>./bin/activemq console xbean:conf/activemq-demo.xml<br/>
+		note: <pre>transportConnector name="mqtt+ws" uri="ws://0.0.0.0:1884?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"</pre>
+		</li>
+	<li><a href="http://localhost:8161/admin/xml/topics.jsp">http://localhost:8161/admin/xml/topics.jsp</a></li>
+	<li>netstat -an | grep 1883</li>
+	<li>mqtt pub -t 'hello' -h 'localhost' -m 'from mqtt command line'</li>
+</ol>
+</body>
+</html>

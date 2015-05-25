@@ -1,0 +1,64 @@
+<html>
+<head>
+   <title>MQTT over Websockets to ActiveMQ + Mozilla Metrics Graphics</title>
+   <link href='lib/metricsgraphics.css' rel='stylesheet' type='text/css'>
+	<script src="./browserMqtt.js"></script>
+
+	<script src='lib/jquery.min.js'></script>
+    <script src='lib/d3.min.js'></script>
+	<script src="lib/metricsgraphics.js"></script>
+
+</head>
+<body>
+	<div id="graph">
+		blah 
+		blah
+	</div>
+<script>
+
+var data = [{
+  date: new Date(),
+  value: 0
+}];
+
+data.push({
+  date: Date.now(),
+  value: 10
+});
+data.push({
+  date: Date.now() + 1500,
+  value: 20
+});
+data.push({
+  date: Date.now() + 3000,
+  value: 30
+});
+data.push({
+  date: Date.now() + 4000,
+  value: 20
+});
+data.push({
+  date: Date.now() + 5000,
+  value: 10
+});
+
+
+  MG.data_graphic({
+    title: "My Graphic",
+    data: data,
+    width: 600,
+    height: 250,
+    target: '#graph',
+    x_accessor: 'date',
+    y_accessor: 'value',
+    y_label: 'Value',
+    small_text: true,
+    interpolate: 'basis'
+  });
+
+
+
+// render();
+</script>
+</body>
+</html>

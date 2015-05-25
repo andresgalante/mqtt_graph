@@ -1,0 +1,135 @@
+<html>
+<head>
+  <title>Temp Sensors via MQTT, Websockets, ActiveMQ, Metrics Graphics, D3.js</title>
+  <link href='lib/metricsgraphics.css' rel='stylesheet' type='text/css'>
+  <script src="./browserMqtt.js"></script>
+  <script src='lib/jquery.min.js'></script>
+  <script src='lib/d3.min.js'></script>
+  <script src="lib/metricsgraphics.js"></script>
+
+</head>
+<body>
+<H3>MQTT over Websockets to ActiveMQ with Metric Graphics using D3.js</H3>
+
+<div id="graph"/>
+<div id="legend"/>
+
+<script>
+    
+    var allsensors = [];
+    var rpi_DS18B20 = []; // readings for Raspberry Pi + DS18B20
+    var ti_cc2541 = []; // readings for TI Sensor Tag cc2541
+    var ti_cc2650 = []; // readings for TI Sensor Tag cc2650
+    var lbb_sense = []; // readings for Light Blue Bean - Sense
+    var minutes = 1;
+
+    allsensors.push(rpi_DS18B20);
+    allsensors.push(ti_cc2541);
+    allsensors.push(ti_cc2650);
+    allsensors.push(lbb_sense);
+
+    var options = {
+        title: "Temperature",
+        description: "Time-series of Temperatures",
+        data: allsensors,
+        width: 600,
+        height: 300,
+        target: '#graph',
+        x_accessor: 'date',
+        y_accessor: 'temp',
+        legend: ['DS18B20','CC2541','CC2650', 'LBB Sense'],
+        legend_target: '#legend'
+    }
+
+
+    
+    var client_rpi_DS18B20 = mqtt.connect("ws://localhost:1884");  
+    var client_ti_cc2541 = mqtt.connect("ws://localhost:1884"); 
+    var client_ti_cc2650 = mqtt.connect("ws://localhost:1884");
+    var client_lbb_sense = mqtt.connect("ws://localhost:1884");
+
+    function reviewSensors(sensors) {
+        for (var i = 0, len = sensors.length; i < len; i++) {
+            console.log(sensors[i]);
+        } // for 
+    } // function reviewSensors
+
+
+    client_rpi_DS18B20.subscribe("temp_rpi_DS18B20");
+    client_ti_cc2541.subscribe("temp_ti_cc2541");
+    client_ti_cc2650.subscribe("temp_ti_cc2650");
+    client_lbb_sense.subscribe("temp_lbb_sense");
+    
+    client_rpi_DS18B20.on("message", function(topic, payload) {
+        var sensordata = JSON.parse(payload.toString());
+        if (rpi_DS18B20.length > 60 * minutes) { // approx N minutes of readings
+            rpi_DS18B20.shift(); // eat an older sensor reading
+        }
+        rpi_DS18B20.push({
+            temp: parseInt(sensordata.temp), 
+            date: new Date(sensordata.time)
+        });
+        
+        allsensors[0] = rpi_DS18B20;
+        
+        options.data = allsensors;
+        
+        var g = MG.data_graphic(options);
+    }); //  client.on("message", function(topic, payload) {
+        
+    client_ti_cc2541.on("message", function(topic, payload) {
+        var sensordata = JSON.parse(payload.toString()); 
+        if (ti_cc2541.length > 60 * minutes) {
+            ti_cc2541.shift(); // eat an older sensor reading
+        }
+        ti_cc2541.push({
+            temp: parseInt(sensordata.temp), 
+            date: new Date(sensordata.time)
+        });
+        
+        allsensors[1] = ti_cc2541;
+        
+        options.data = allsensors;
+        
+        var g = MG.data_graphic(options);
+
+    }); //  client.on("message", function(topic, payload) {
+
+   client_ti_cc2650.on("message", function(topic, payload) {
+        var sensordata = JSON.parse(payload.toString()); 
+        if (ti_cc2650.length > 60 * minutes) {
+            ti_cc2650.shift(); // eat an older sensor reading
+        }
+        ti_cc2650.push({
+            temp: parseInt(sensordata.temp), 
+            date: new Date(sensordata.time)
+        });
+
+        allsensors[2] = ti_cc2650;
+        options.data = allsensors;
+        var g = MG.data_graphic(options);
+    }); //  client.on("message", function(topic, payload) {
+
+    client_lbb_sense.on("message", function(topic, payload) {
+        var sensordata = JSON.parse(payload.toString()); 
+        // console.log("lbb_sense: " + sensordata);
+        if (lbb_sense.length > 60 * minutes) {
+            lbb_sense.shift(); // eat an older sensor reading
+        }
+        // console.log(sensordata.temp);
+        // console.log(sensordata.time);
+
+        lbb_sense.push({
+            temp: parseInt(sensordata.temp), 
+            date: new Date(sensordata.time)
+        });
+
+        allsensors[3] = lbb_sense;
+        reviewSensors(lbb_sense);
+        options.data = allsensors;
+        var g = MG.data_graphic(options);
+    }); //  client.on("message", function(topic, payload) {
+    
+ </script>  
+</body>
+</html>

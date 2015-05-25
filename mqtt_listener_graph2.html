@@ -1,0 +1,95 @@
+<html>
+<head>
+  <title>MQTT over Websockets to ActiveMQ 2</title>
+  <link href='lib/metricsgraphics.css' rel='stylesheet' type='text/css'>
+  <script src="./browserMqtt.js"></script>
+  <script src='lib/jquery.min.js'></script>
+  <script src='lib/d3.min.js'></script>
+  <script src="lib/metricsgraphics.js"></script>
+
+</head>
+<body>
+<H1>MQTT over Websockets with ActiveMQ </H1>
+
+<div id="graph"/>
+<div id="legend"/>
+
+<script>
+    
+    var allsensors = [];
+    var rpi_DS18B20 = []; // readings for Raspberry Pi + DS18B20
+	var ti_cc2541 = []; // readings for TI Sensor Tag cc2541
+
+    allsensors.push(rpi_DS18B20);
+    allsensors.push(ti_cc2541);
+
+	var options = {
+	    title: "Temperature",
+	    description: "Time-series of Temperatures",
+	    data: allsensors,
+	    width: 600,
+	    height: 250,
+	    target: '#graph',
+	    x_accessor: 'date',
+	    y_accessor: 'temp',
+		legend: ['DS18B20','CC2541','Burr'],
+        legend_target: '#legend'
+	}
+
+
+	
+    var client_ti_cc2541 = mqtt.connect("ws://localhost:1884");  // ws://localhost:3000 for mosca
+    var client_rpi_DS18B20 = mqtt.connect("ws://localhost:1884");  // ws://localhost:3000 for mosca
+
+
+	function reviewSensors(sensors) {
+		for (var i = 0, len = sensors.length; i < len; i++) {
+			console.log(sensors[i]);
+    	} // for 
+	} // function reviewSensors
+
+
+    client_ti_cc2541.subscribe("temp_ti_cc2541");
+	client_rpi_DS18B20.subscribe("temp_rpi_DS18B20");
+	
+	client_rpi_DS18B20.on("message", function(topic, payload) {
+        var sensordata = JSON.parse(payload.toString());
+        if (rpi_DS18B20.length > 60 * 5) { // approx 5 minutes of readings
+	 		rpi_DS18B20.shift(); // eat an older sensor reading
+        }
+		rpi_DS18B20.push({
+			temp: parseInt(sensordata.temp), 
+			date: new Date(sensordata.time)
+		});
+		
+		// how to replace a previously added rpi_DS18B20 array?
+		// allsensors.push(rpi_DS18B20); 
+		allsensors[0] = rpi_DS18B20;
+		
+		options.data = allsensors;
+		
+   	    var g = MG.data_graphic(options);
+    }); //  client.on("message", function(topic, payload) {
+		
+    client_ti_cc2541.on("message", function(topic, payload) {
+        var sensordata = JSON.parse(payload.toString()); 
+        if (ti_cc2541.length > 60 * 5) {
+	 		ti_cc2541.shift(); // eat an older sensor reading
+        }
+		ti_cc2541.push({
+			temp: parseInt(sensordata.temp), 
+			date: new Date(sensordata.time)
+		});
+		
+		// allsensors.push(ti_cc2541); 
+		allsensors[1] = ti_cc2541;
+		
+		options.data = allsensors;
+		
+   	    var g = MG.data_graphic(options);
+
+    }); //  client.on("message", function(topic, payload) {
+	
+ </script> 	
+</body>
+</html>

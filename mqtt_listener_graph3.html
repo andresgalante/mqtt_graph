@@ -1,0 +1,93 @@
+<html>
+<head>
+  <title>MQTT over Websockets to ActiveMQ 3</title>
+  <link href='lib/metricsgraphics.css' rel='stylesheet' type='text/css'>
+  <script src="./browserMqtt.js"></script>
+  <script src='lib/jquery.min.js'></script>
+  <script src='lib/d3.min.js'></script>
+  <script src="lib/metricsgraphics.js"></script>
+
+</head>
+<body>
+<H1>MQTT over Websockets with ActiveMQ</H1>
+
+<div id="ti_cc2541_graph">CC2541 Graph</div>
+<hr/>
+<div id="rpi_DS18B20_graph">DS18B20 Graph</div>
+
+<script>
+    
+    // var allsensors = [];
+    var ti_cc2541 = []; // readings for TI Sensor Tag cc2541
+    var rpi_DS18B20 = []; // readings for Raspberry Pi + DS18B20
+
+    var options = {
+        title: "Temperature",
+        data: ti_cc2541,
+        width: 300,
+        height: 150,
+        target: '#ti_cc2541_graph',
+        x_accessor: 'date',
+        y_accessor: 'temp',
+    }
+
+
+    
+    var client_ti_cc2541 = mqtt.connect("ws://localhost:1884");  // ws://localhost:3000 for mosca
+    var client_rpi_DS18B20 = mqtt.connect("ws://localhost:1884");  // ws://localhost:3000 for mosca
+
+
+    function reviewSensors(sensors) {
+        for (var i = 0, len = sensors.length; i < len; i++) {
+            console.log(sensors[i]);
+        } // for 
+    } // function reviewSensors
+
+
+    client_ti_cc2541.subscribe("temp_ti_cc2541");
+    client_rpi_DS18B20.subscribe("temp_rpi_DS18B20");
+    
+    client_rpi_DS18B20.on("message", function(topic, payload) {
+        var sensordata = JSON.parse(payload.toString());
+        if (rpi_DS18B20.length > 60 * 5) {
+            rpi_DS18B20.shift();
+        }
+        rpi_DS18B20.push({
+            temp: parseInt(sensordata.temp), 
+            date: new Date(sensordata.time)
+        });
+        // allsensors.push(rpi_DS18B20); 
+        options.title = "DS18B20";
+        options.data = rpi_DS18B20;
+        options.target = "#rpi_DS18B20_graph";
+        var g_rpi_DS18B20 = MG.data_graphic(options);
+        // console.log(g);
+    }); //  client.on("message", function(topic, payload) {
+        
+    client_ti_cc2541.on("message", function(topic, payload) {
+        console.log(payload.toString());
+        var sensordata = JSON.parse(payload.toString());
+        console.log(sensordata.sensorid);
+        console.log(sensordata.temp);
+        console.log(sensordata.time);
+        if (ti_cc2541.length > 60 * 5) {
+            ti_cc2541.shift();
+        }
+        ti_cc2541.push({
+            temp: parseInt(sensordata.temp), 
+            date: new Date(sensordata.time)
+        });
+        $("#messages").append("<li>" + sensordata.temp + "</li>");
+        reviewSensors(ti_cc2541);
+        // allsensors.push(ti_cc2541); 
+        options.title = "cc2541";
+        options.data = ti_cc2541;
+        options.target = "#ti_cc2541_graph";        
+        var g_ti_cc2541 = MG.data_graphic(options);
+        // console.log(g);
+    }); //  client.on("message", function(topic, payload) {
+    
+ </script> 
+<div id="messages"></div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<html>
+<head>
+  <title>MQTT over Websockets to ActiveMQ</title>
+</head>
+<body>
+<script src="./browserMqtt.js"></script>
+<script src='lib/jquery.min.js'></script>
+<script src='lib/d3.min.js'></script>
+<script src="lib/metricsgraphics.js"></script>
+
+<script>
+    
+    // var allsensors = [];
+	var ti_cc2541 = []; // readings for TI Sensor Tag cc2541
+	
+    var client_ti_cc2541 = mqtt.connect("ws://localhost:1884");  // ws://localhost:3000 for mosca
+
+	function reviewSensors(sensors) {
+		for (var i = 0, len = sensors.length; i < len; i++) {
+			console.log(sensors[i]);
+    	} // for 
+	} // function reviewSensors
+
+
+    client_ti_cc2541.subscribe("temp_ti_cc2541");
+
+    client_ti_cc2541.on("message", function(topic, payload) {
+        console.log(payload.toString());
+        var sensordata = JSON.parse(payload.toString());
+        console.log(sensordata.sensorid);
+        console.log(sensordata.temp);
+        console.log(sensordata.date);
+ 
+		ti_cc2541.push(sensordata);
+		$("#messages").append("<li>" + sensordata.temp + "</li>");
+		reviewSensors(ti_cc2541);
+		
+    }); //  client.on("message", function(topic, payload) {
+	
+ </script> 
+
+MQTT over Websockets with ActiveMQ
+<ul id="messages">
+</ul>
+	
+</body>
+</html>
