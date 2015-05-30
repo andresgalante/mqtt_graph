@@ -54,13 +54,18 @@
         MG.data_graphic(options);
     }
 
+    // ideally, all sensors should publish the temperature to a single topic and add another JSON attribute with the sensor ID
     mqttClient.subscribe("temp_rpi_DS18B20");
     mqttClient.subscribe("temp_ti_cc2541");
     mqttClient.subscribe("temp_ti_cc2650");
     mqttClient.subscribe("temp_lbb_sense");
     
     mqttClient.on("message", function(topic, payload) {
-        publishData(topic, JSON.parse(payload.toString()));
+        var sensorData = JSON.parse(payload.toString());
+        publishData(topic, sensorData);
+
+        // if we had sensor ID in the JSON, we would call:
+        // publishData(sensorData.id, sensorData);
     });
 
  </script>  
