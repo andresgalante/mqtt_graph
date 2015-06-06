@@ -1,0 +1,73 @@
+<html>
+<head>
+  <title>Temp Sensors via MQTT, Websockets, ActiveMQ, Metrics Graphics, D3.js</title>
+  <link href='lib/metricsgraphics.css' rel='stylesheet' type='text/css'>
+  <script src="./browserMqtt.js"></script>
+  <script src='lib/jquery.min.js'></script>
+  <script src='lib/d3.min.js'></script>
+  <script src="lib/metricsgraphics.js"></script>
+
+</head>
+<body>
+<H3>MQTT over Websockets to ActiveMQ with Metric Graphics using D3.js</H3>
+
+
+<div id="all_graph">All in One Graph</div>
+<br/>
+<div id="legend">Legend</div>
+
+<script>
+    
+    var chart = [];
+    var lineNames = [];
+    var minutes = .5;
+
+    var options = {
+        title: "Temperature",
+        description: "Time-series of Temperatures",
+        data: chart,
+        width: 300,
+        height: 150,
+        target: '#all_graph',
+        legend: lineNames,
+        legend_target: '#legend',
+    }
+
+    var mqttClient = mqtt.connect("ws://localhost:1884");
+
+    function publishData(sensorId, sensorData) {
+        var d = {};
+        d['date'] = new Date(sensorData.time);
+        d['value'] = parseInt(sensorData.temp);
+
+        if (lineNames.indexOf(sensorId) >= 0) {
+            var sensorChart = chart[lineNames.indexOf(sensorId)];
+            if (sensorChart.length > 60 * minutes) {
+                sensorChart.shift();
+            }
+            sensorChart.push(d);
+        } else {
+            chart.push([d]);
+            lineNames.push(sensorId);
+        }
+
+        MG.data_graphic(options);
+    }
+
+    // ideally, all sensors should publish the temperature to a single topic and add another JSON attribute with the sensor ID
+    mqttClient.subscribe("temp_rpi_DS18B20");
+    mqttClient.subscribe("temp_ti_cc2541");
+    mqttClient.subscribe("temp_ti_cc2650");
+    mqttClient.subscribe("temp_lbb_sense");
+    
+    mqttClient.on("message", function(topic, payload) {
+        var sensorData = JSON.parse(payload.toString());
+        publishData(topic, sensorData);
+
+        // if we had sensor ID in the JSON, we would call:
+        // publishData(sensorData.id, sensorData);
+    });
+
+ </script>  
+</body>
+</html>
